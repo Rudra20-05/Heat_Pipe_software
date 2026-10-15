@@ -11,7 +11,7 @@ from ..configuration import catalogue
 from ..calibration import reference as R
 from ..reports import export
 
-router = APIRouter(prefix="/api")
+router = APIRouter()
 DATA = pathlib.Path(os.environ.get("HP_DATA_DIR", pathlib.Path(__file__).resolve().parents[2] / "data" / "projects"))
 MAX_UPLOAD = 2_000_000
 

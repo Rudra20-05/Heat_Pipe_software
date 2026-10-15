@@ -11,3 +11,5 @@ backend/data/projects/*
 scratch/
 *.webp
 *.log
+
+.vercel
