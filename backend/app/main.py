@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from .api.routes import router
 import os
+app = FastAPI(title="Vertical Heat Pipe Selection API", version="0.1.0")
 
 cors_origins_env = os.environ.get("HP_CORS_ORIGINS")
 allowed_origins = [o.strip() for o in cors_origins_env.split(",")] if cors_origins_env else ["*"]
