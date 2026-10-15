@@ -19,6 +19,12 @@ app.include_router(router, prefix="/api")
 app.include_router(router, prefix="")
 
 
+
+@app.get("/api")
+def api_root():
+    return {"status": "ok", "title": "Vertical Heat Pipe Selection API", "model_version": "0.1.0"}
+
+
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(_, exc: RequestValidationError):
     errors = []
