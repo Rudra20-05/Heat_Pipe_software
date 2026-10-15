@@ -1,0 +1,9 @@
+services:
+  api:
+    build: .
+    ports: ["8000:8000"]
+    volumes: ["hp_data:/data"]
+    environment:
+      HP_CORS_ORIGINS: "http://localhost:5173"
+volumes:
+  hp_data:

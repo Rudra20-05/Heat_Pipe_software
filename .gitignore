@@ -1,0 +1,13 @@
+node_modules/
+__pycache__/
+*.pyc
+frontend/dist/
+.env
+.venv/
+.pytest_cache/
+.tempmediaStorage/
+backend/data/projects/*
+!backend/data/projects/realistic-summer-01.json
+scratch/
+*.webp
+*.log

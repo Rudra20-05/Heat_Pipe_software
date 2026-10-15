@@ -1,0 +1,75 @@
+{
+  "project": {
+    "customer": "Metro HVAC Engineering",
+    "project_name": "Office ERV Heat Recovery",
+    "reference_number": "ERV-2026-01",
+    "tag_number": "VHP-01",
+    "engineer": "R. Dalvi",
+    "design_case": "Peak Summer Cooling"
+  },
+  "equipment": {
+    "brand": "H&M",
+    "model_code": "VHP-4R-31T-1000L",
+    "configuration": "VHP",
+    "refrigerant": "R134a",
+    "rows": 4,
+    "tube_nominal": "1/2",
+    "tube_od_mm": 12.7,
+    "tube_thk_mm": 0.34,
+    "tube_type": "inner_groove",
+    "transverse_pitch_mm": 31.75,
+    "longitudinal_pitch_mm": 27.5,
+    "fin_material": "aluminium",
+    "fin_thk_mm": 0.14,
+    "fin_pitch_mm": 2.1,
+    "fin_type": "sine_wave_rippled_edges",
+    "fin_coating": "nano",
+    "frame": "galvanized_steel",
+    "tubes_per_row": 31,
+    "fin_length_mm": 1000,
+    "fin_height_mm": 984.25,
+    "circuits": 2,
+    "circuit_orientation": "vertical",
+    "installation": "vertical",
+    "altitude_m": 0,
+    "site_pressure_pa": null
+  },
+  "scenario": "cooling",
+  "supply": {
+    "flow": 3000.0,
+    "flow_unit": "cfm",
+    "flow_basis": "actual",
+    "input_mode": "db_rh",
+    "db": 35.0,
+    "rh": 45.0,
+    "wb": null,
+    "fin_length_mm": null
+  },
+  "exhaust": {
+    "flow": 2500.0,
+    "flow_unit": "cfm",
+    "flow_basis": "actual",
+    "input_mode": "db_rh",
+    "db": 24.0,
+    "rh": 50.0,
+    "wb": 18.7,
+    "fin_length_mm": null
+  },
+  "models": {
+    "thermal": {
+      "ua_coeff": 0.45,
+      "ua_exponent": 0.6,
+      "internal_resistance_k_per_kw": 0.05,
+      "wet_bypass_factor": 0.15
+    },
+    "pressure_drop": {
+      "provider": "power_law_per_row",
+      "coeff_pa_per_row": 28.0,
+      "exponent": 1.7
+    }
+  },
+  "tolerances": {
+    "energy_balance_pct": 1.0,
+    "min_delta_t_k": 0.5
+  }
+}

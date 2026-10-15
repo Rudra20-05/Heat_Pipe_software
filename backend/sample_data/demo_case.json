@@ -1,0 +1,2 @@
+{"_note":"Demo inputs transcribed from the supplied H&M software screenshot. Editable examples, NOT manufacturer-validated. No thermal/pressure coefficients are included on purpose.",
+ "load_via":"GET /api/configuration -> demo_case"}
