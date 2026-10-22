@@ -4,7 +4,7 @@ import unittest, math
 from app.services import psychrometrics as P, air_properties as A, geometry as G, heat_pipe_model as H
 from app.services import pressure_drop as PD
 from app.services.performance import calculate, CaseError
-from app.configuration.defaults import demo_case
+from app.configuration.defaults import demo_case, empty_case
 
 P0 = 101325.0
 
@@ -103,9 +103,16 @@ class Thermal(unittest.TestCase):
         self.assertNotIn("effectiveness_pct", r["performance"])
 
     def test_missing_thermal_parameters_no_fake_results(self):
-        r = calculate(demo_case())
+        r = calculate(empty_case())
         self.assertEqual(r["status"], "partial"); self.assertIsNone(r["streams"]["supply"]["outlet"])
         self.assertNotIn("q_kw", r["performance"])
+
+    def test_baseline_demo_calculation(self):
+        r = calculate(demo_case())
+        self.assertEqual(r["status"], "ok")
+        self.assertIsNotNone(r["performance"].get("q_kw"))
+        self.assertGreater(r["performance"]["q_kw"], 0)
+        self.assertGreater(r["performance"]["effectiveness_pct"], 35.0)
 
     def test_effectiveness_override(self):
         c = demo_case(); c["models"]["thermal"]["effectiveness_override"] = 0.5
@@ -124,6 +131,7 @@ class Thermal(unittest.TestCase):
 
     def test_wet_coil_required_without_bypass_factor(self):
         c = case_with(ua=50.0); c["supply"].update(db=35, rh=70); c["exhaust"].update(db=5, wb=3)
+        c["models"]["thermal"]["wet_bypass_factor"] = None
         r = calculate(c)
         self.assertEqual(r["performance"]["condensate"]["status"], "wet_coil_required")
         self.assertIsNone(r["streams"]["supply"]["outlet"])
@@ -139,7 +147,7 @@ class Thermal(unittest.TestCase):
 
 class Pressure(unittest.TestCase):
     def test_unavailable_by_default(self):
-        r = calculate(demo_case()); self.assertEqual(r["pressure_drop"]["supply"]["status"], "unavailable")
+        r = calculate(empty_case()); self.assertEqual(r["pressure_drop"]["supply"]["status"], "unavailable")
 
     def test_power_law_scaling(self):
         cfg = {"provider": "power_law_per_row", "coeff_pa_per_row": 10.0, "exponent": 1.8}

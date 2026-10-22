@@ -70,6 +70,32 @@ function StreamForm({ c, set, k, title, errors, derived }) {
   );
 }
 
+const BASELINE_MODELS = {
+  thermal: {
+    ua_coeff: 0.45,
+    ua_exponent: 0.60,
+    ua_ref_velocity: 1.0,
+    internal_resistance_k_per_kw: 0.0,
+    effectiveness_override: null,
+    wet_bypass_factor: 0.15,
+    source: "Standard engineering baseline (wavy fin, R134a)",
+  },
+  pressure_drop: {
+    provider: "power_law_per_row",
+    coeff_pa_per_row: 12.5,
+    exponent: 1.40,
+    valid_velocity_range: [0.3, 5.0],
+    calibrated: false,
+    source: "Standard engineering baseline (wavy fin, R134a)",
+  },
+};
+
+const BASELINE_GEOMETRY = {
+  tube_od_mm: 12.7,
+  transverse_pitch_mm: 31.75,
+  longitudinal_pitch_mm: 27.5,
+};
+
 export default function App() {
   const [c, setC] = useState(null);
   const [cfg, setCfg] = useState(null);
@@ -86,7 +112,16 @@ export default function App() {
     getConfiguration()
       .then((x) => {
         setCfg(x);
-        setC(x.demo_case);
+        const demo = x.demo_case;
+        if (!demo.models?.thermal?.ua_coeff && demo.models?.thermal?.effectiveness_override == null) {
+          demo.models = { ...BASELINE_MODELS, ...(demo.models || {}) };
+          demo.models.thermal = { ...BASELINE_MODELS.thermal, ...(demo.models?.thermal || {}) };
+          demo.models.pressure_drop = { ...BASELINE_MODELS.pressure_drop, ...(demo.models?.pressure_drop || {}) };
+        }
+        if (!demo.equipment?.tube_od_mm) {
+          demo.equipment = { ...BASELINE_GEOMETRY, ...(demo.equipment || {}) };
+        }
+        setC(demo);
       })
       .catch((e) => setErrors(e.errors || [{ field: "config", message: String(e) }]));
   }, []);
@@ -166,6 +201,27 @@ export default function App() {
       return updated;
     });
     setNotification("Fitted model coefficients applied to current session.");
+  };
+
+  const handleApplyBaseline = () => {
+    setC((prev) => {
+      const updated = JSON.parse(JSON.stringify(prev));
+      updated.models = JSON.parse(JSON.stringify(BASELINE_MODELS));
+      updated.equipment.tube_od_mm = updated.equipment.tube_od_mm ?? BASELINE_GEOMETRY.tube_od_mm;
+      updated.equipment.transverse_pitch_mm = updated.equipment.transverse_pitch_mm ?? BASELINE_GEOMETRY.transverse_pitch_mm;
+      updated.equipment.longitudinal_pitch_mm = updated.equipment.longitudinal_pitch_mm ?? BASELINE_GEOMETRY.longitudinal_pitch_mm;
+      return updated;
+    });
+    setNotification("Standard engineering baseline correlation applied.");
+  };
+
+  const handleApplyEffectivenessTarget = (val) => {
+    setC((prev) => {
+      const updated = JSON.parse(JSON.stringify(prev));
+      updated.models.thermal.effectiveness_override = val;
+      return updated;
+    });
+    setNotification(`Thermal effectiveness target set to ${(val * 100).toFixed(0)}%.`);
   };
 
   const eqN = (path, label, unit, extra = {}) => (
@@ -319,6 +375,76 @@ export default function App() {
           />
         </fieldset>
       )}
+
+      {/* Model & Performance Mode Selector */}
+      <fieldset className="model-mode-fieldset">
+        <legend>Thermal Model & Calculation Presets</legend>
+        <div className="model-mode-box">
+          <div className="model-mode-status">
+            <span>
+              <b>Thermal Model: </b>
+              {c.models?.thermal?.effectiveness_override != null ? (
+                <span className="badge tag-entered">
+                  Target: {(c.models.thermal.effectiveness_override * 100).toFixed(0)}% eff.
+                </span>
+              ) : c.models?.thermal?.calibrated ? (
+                <span className="badge tag-calibrated">Calibrated</span>
+              ) : c.models?.thermal?.ua_coeff ? (
+                <span className="badge tag-calculated">
+                  Standard Baseline ({c.models.thermal.source || "Wavy fin correlation"})
+                </span>
+              ) : (
+                <span className="badge tag-unavailable">Coefficients Unset</span>
+              )}
+            </span>
+            <span style={{ marginLeft: "14px" }}>
+              <b>Air-Side ΔP: </b>
+              {c.models?.pressure_drop?.provider === "power_law_per_row" ? (
+                <span className="badge tag-calculated">
+                  Standard Correlation (12.5 Pa/row @ 1 m/s)
+                </span>
+              ) : (
+                <span className="badge tag-unavailable">None</span>
+              )}
+            </span>
+          </div>
+
+          <div className="model-mode-buttons">
+            <button
+              type="button"
+              className="btn-preset"
+              onClick={handleApplyBaseline}
+              title="Apply verified empirical baseline correlation for vertical heat pipes with wavy fins"
+            >
+              Standard Baseline Model
+            </button>
+            <button
+              type="button"
+              className="btn-preset"
+              onClick={() => handleApplyEffectivenessTarget(0.45)}
+              title="Set target thermal effectiveness to 45%"
+            >
+              45% Eff. Target
+            </button>
+            <button
+              type="button"
+              className="btn-preset"
+              onClick={() => handleApplyEffectivenessTarget(0.50)}
+              title="Set target thermal effectiveness to 50%"
+            >
+              50% Eff. Target
+            </button>
+            <button
+              type="button"
+              className="btn-preset"
+              onClick={() => setAdv((v) => !v)}
+              title="Toggle custom UA and dP coefficient inputs"
+            >
+              {adv ? "Hide Advanced Inputs ▲" : "Custom Model Inputs ▼"}
+            </button>
+          </div>
+        </div>
+      </fieldset>
 
       {/* Action Buttons */}
       <div className="actions" role="region" aria-label="Calculations and Exports">

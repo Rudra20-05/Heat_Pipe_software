@@ -13,15 +13,15 @@ export function StatusBadge({ status }) {
   } else if (norm.includes("calibrated")) {
     cls = "tag-calibrated";
     text = "calibrated";
-  } else if (norm.includes("calculated")) {
+  } else if (norm.includes("calculated") || norm === "ok") {
     cls = "tag-calculated";
     text = "calculated";
   } else if (norm.includes("entered")) {
     cls = "tag-entered";
     text = "entered";
-  } else if (norm.includes("preliminary")) {
+  } else if (norm.includes("baseline") || norm.includes("preliminary")) {
     cls = "tag-preliminary";
-    text = "preliminary";
+    text = norm.includes("baseline") ? "baseline estimate" : "preliminary";
   }
 
   return <span className={`badge ${cls}`}>{text}</span>;

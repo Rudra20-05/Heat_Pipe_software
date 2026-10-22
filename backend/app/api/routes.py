@@ -6,7 +6,7 @@ from ..schemas.models import Case, PsychroRequest, SweepRequest
 from ..services import psychrometrics as P
 from ..services.performance import calculate, CaseError
 from ..services import validation as V
-from ..configuration.defaults import demo_case, MODEL_VERSION, OLD_SOFTWARE_REFERENCE
+from ..configuration.defaults import demo_case, empty_case, MODEL_VERSION, OLD_SOFTWARE_REFERENCE, DEFAULT_ENGINEERING_MODELS, DEFAULT_GEOMETRY
 from ..configuration import catalogue
 from ..calibration import reference as R
 from ..reports import export
@@ -31,7 +31,8 @@ def health():
 @router.get("/configuration")
 def configuration():
     return {"model_version": MODEL_VERSION, "catalogue": catalogue.CATALOGUE, "discrepancies": catalogue.DISCREPANCIES,
-            "demo_case": demo_case(), "old_software_reference": OLD_SOFTWARE_REFERENCE,
+            "demo_case": demo_case(), "baseline_models": DEFAULT_ENGINEERING_MODELS, "baseline_geometry": DEFAULT_GEOMETRY,
+            "old_software_reference": OLD_SOFTWARE_REFERENCE,
             "supported": {"configuration": ["VHP"], "refrigerant": ["R134a"], "flow_units": list(V.UNITS)},
             "feature_status": catalogue.FEATURE_STATUS}
 

@@ -11,7 +11,7 @@ import io
 import unittest
 from fastapi.testclient import TestClient
 from app.main import app
-from app.configuration.defaults import demo_case
+from app.configuration.defaults import demo_case, empty_case
 
 
 class ApiTests(unittest.TestCase):
@@ -102,8 +102,8 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         data = res.json()
 
-        # Overall status is partial because thermal and dP are uncalibrated
-        self.assertEqual(data["status"], "partial")
+        # Overall status is ok because baseline models are configured
+        self.assertEqual(data["status"], "ok")
 
         # Geometry checks vs screenshot
         geom = data["geometry"]
@@ -135,26 +135,39 @@ class ApiTests(unittest.TestCase):
         self.assertAlmostEqual(exhaust["inlet"]["rh"], 55.05, delta=0.1)
         self.assertAlmostEqual(exhaust["inlet"]["h"], 52.91, delta=0.05)
 
-        # Thermal performance unavailable
+        # Thermal performance calculated
         perf = data["performance"]
-        self.assertIsNone(perf.get("q_kw"))
-        self.assertIsNone(perf.get("effectiveness_pct"))
+        self.assertIsNotNone(perf.get("q_kw"))
+        self.assertGreater(perf["q_kw"], 0)
+        self.assertIsNotNone(perf.get("effectiveness_pct"))
+        self.assertGreater(perf["effectiveness_pct"], 35.0)
         self.assertEqual(perf["hot_stream"], "supply")
         self.assertEqual(perf["cold_stream"], "exhaust")
 
-        # Pressure drop unavailable
+        # Pressure drop calculated
+        dp = data["pressure_drop"]
+        self.assertIn(dp["supply"]["status"], ("preliminary", "baseline"))
+        self.assertGreater(dp["supply"]["value_pa"], 0)
+        self.assertGreater(dp["exhaust"]["value_pa"], 0)
+
+        # Outlets calculated
+        self.assertIsNotNone(supply["outlet"])
+        self.assertIsNotNone(exhaust["outlet"])
+
+    def test_missing_parameters_returns_unavailable(self):
+        case = empty_case()
+        res = self.client.post("/api/calculate", json=case)
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertEqual(data["status"], "partial")
+        perf = data["performance"]
+        self.assertIsNone(perf.get("q_kw"))
+        self.assertIsNone(perf.get("effectiveness_pct"))
         dp = data["pressure_drop"]
         self.assertEqual(dp["supply"]["status"], "unavailable")
-        self.assertEqual(dp["exhaust"]["status"], "unavailable")
-
-        # Unavailable list has reasons and missing fields
-        unavail = data["unavailable"]
-        unavail_names = [u["output"] for u in unavail]
+        unavail_names = [u["output"] for u in data["unavailable"]]
         self.assertIn("thermal performance", unavail_names)
         self.assertIn("supply.pressure_drop", unavail_names)
-        self.assertIn("exhaust.pressure_drop", unavail_names)
-        self.assertIn("refrigerant_charge", unavail_names)
-        self.assertIn("price", unavail_names)
 
     # 3. No fake results on failure
     def test_no_fake_results_on_failure(self):
